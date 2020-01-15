@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>刮刮乐</title>
+        <style type="text/css">
+            html,
+            body {
+                height: 100%;
+            }
+            html {
+                background-image: url("./img/guaguaka_bg.png");
+                background-repeat: no-repeat;
+                background-size: 100% 100%;
+                overflow: hidden;
+            }
+            body {
+                overflow-y: auto;
+            }
+            * {
+                margin: 0;
+                padding: 0;
+            }
+            .header {
+                width: 100%;
+            }
+            .header img {
+                width: 300px;
+                margin: 0 auto 30px;
+                display: block;
+            }
+            .container {
+                width: 1020px;
+                margin: 0 auto;
+                font-size: 0;
+                margin-bottom: 200px;
+            }
+            .container .guaguale {
+                display: inline-block;
+            }
+            .guaguale {
+                width: 310px;
+                height: 170px;
+                background-image: url("./img/gua_image.png");
+                background-size: 100% 100%;
+                background-repeat: no-repeat;
+                padding: 5px;
+                position: relative;
+                margin: 10px;
+            }
+            .guaguale .guaguale-inner {
+                height: 100%;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 60px;
+                font-style: italic;
+                font-weight: bold;
+            }
+            .guaguale > canvas {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <header class="header">
+            <img src="./img/guaguaka_word.png" alt="" />
+        </header>
+        <div class="container" id="guaguale-container"></div>
+
+        <script type="x-dot-template" id="guaguale-tpl">
+            <div class="guaguale">
+            	<div class="guaguale-inner">{{=it.worth}}元</div>
+            	<canvas id="guaGuaLeCanvas-{{=it.id}}" width="300" height="160"></canvas>
+            </div>
+        </script>
+    </body>
+    <script src="./js/doT.min.js"></script>
+    <script type="text/javascript">
+        // 奖品数据 worth 面值 number 数量
+        var awardJson = [
+            {
+                worth: 50,
+                number: 2
+            },
+            {
+                worth: 10,
+                number: 10
+            },
+            {
+                worth: 20,
+                number: 5
+            }
+        ];
+
+        // 查看奖品信息
+        checkAwardInfo(awardJson);
+
+        // 初始化奖品
+        init();
+
+        function init() {
+            // 奖品arr
+            var awardJsonArr = [];
+            // 装载奖品
+            awardJson.forEach(item => {
+                var itemWorth = item.worth;
+                var itemNumber = item.number;
+                for (var i = 0; i < itemNumber; i++) {
+                    awardJsonArr.push(itemWorth);
+                }
+            });
+            // 随机打乱
+            var awardJsonArrByShuffle = shuffle(awardJsonArr);
+            var guaGuaLeTpl = document.getElementById("guaguale-tpl").innerHTML;
+            var tempFn = doT.template(guaGuaLeTpl);
+            awardJsonArrByShuffle.forEach((item, index) => {
+                var itemData = {
+                    id: index,
+                    worth: item
+                };
+                document
+                    .getElementById("guaguale-container")
+                    .insertAdjacentHTML("beforeend", tempFn(itemData));
+                initGuaGuaLe(
+                    document.getElementById("guaGuaLeCanvas-" + index)
+                );
+            });
+        }
+
+        // 初始化刮刮乐卡片
+        function initGuaGuaLe(el) {
+            var context = el.getContext("2d");
+            //画蒙布
+            context.beginPath();
+            context.fillStyle = "grey";
+            context.fillRect(0, 0, 300, 160);
+            //鼠标按下开刮
+            el.onmousedown = function() {
+                el.onmousemove = function() {
+                    //获取鼠标坐标
+                    var x = event.clientX;
+                    var y = event.clientY;
+                    //destination-out 显示原来的不在后来区域的部分
+                    context.globalCompositeOperation = "destination-out";
+                    context.beginPath();
+                    // offset坐标为元素偏移量 scrollTop为页面滚动高度
+                    context.arc(
+                        x - el.parentNode.offsetLeft - 10,
+                        y -
+                            el.parentNode.offsetTop -
+                            10 +
+                            document.body.scrollTop,
+                        15,
+                        0,
+                        Math.PI * 2
+                    );
+                    context.fill();
+                };
+            };
+            //鼠标抬起不刮开
+            el.onmouseup = function() {
+                el.onmousemove = function() {};
+            };
+            el.onmouseleave = function() {
+                el.onmousemove = function() {};
+            };
+        }
+
+        // 检查奖品信息
+        function checkAwardInfo(awards) {
+            awards.sort(function(a, b) {
+                return b.worth - a.worth;
+            });
+            awards.forEach((item, index) => {
+                console.log(
+                    "第" +
+                        (index + 1) +
+                        "名---" +
+                        item.worth +
+                        "元的刮刮卡共" +
+                        item.number +
+                        "个."
+                );
+            });
+        }
+
+        // 打乱数组
+        function shuffle(array) {
+            var currentIndex = array.length,
+                temporaryValue,
+                randomIndex;
+            while (0 !== currentIndex) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex -= 1;
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
+            }
+            return array;
+        }
+    </script>
+</html>
